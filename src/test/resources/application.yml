@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:test
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+#h2는 jvm안에 메모리 모드로 돌릴 수 있다. in-Memory로 구동하며
+  #스프링 부트는 별도의 명시가 없어도 인메모리 모드로 구동한다.
+  jpa:
+    hibernate:
+      ddl-auto: create
+  properties:
+    hibernate:
+#      show_sql: true #sysout으로 찍기 때문에 쓰면 안됨
+      format_sql: true
+logging.level:
+  org.hibernate.SQL: debug
+  org.hibernate.orm.jdbc.bind: trace #스프링 부트 3.x, hibernate6
