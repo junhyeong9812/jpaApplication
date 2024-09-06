@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: header" />
+<style>
+    .fieldError {
+    border-color: #bd2130;
+    }
+</style>
+<body>
+<div class="container">
+    <div th:replace="fragments/bodyHeader :: bodyHeader"/>
+    <form role="form" action="/members/new" th:object="${memberForm}"
+          method="post">
+        <!--          모델로 넘겨받은 맴버 폼 객체를 그대로 사용하고
+                    그 맴버 폼 객체에 데이터를 채워넣도록 설계 되어 있다.-->
+        <div class="form-group">
+            <label th:for="name">이름</label>
+            <input type="text" th:field="*{name}" class="form-control"
+                   placeholder="이름을 입력하세요"
+                   th:class="${#fields.hasErrors('name')}? 'form-control
+fieldError' : 'form-control'">
+<!--            바인딩 결과에 에러가 담기게 되는데 다시 그 폼으로 보낼 때
+                스프링에서 기본적으로 form안에 넣어주고
+                fields.hasErrors를 통해서  css를 추가로 적용시킨다.
+                그리고 네임 필드에 대해서 에러에 담긴 문자열를 뽑아서 출력해준다.
+                그리고 form데이터는 그대로 다시 가져오게 된다.-->
+            <p th:if="${#fields.hasErrors('name')}"
+               th:errors="*{name}">Incorrect date</p>
+        </div>
+        <div class="form-group">
+            <label th:for="city">도시</label>
+            <input type="text" th:field="*{city}" class="form-control"
+                   placeholder="도시를 입력하세요">
+        </div>
+        <div class="form-group">
+            <label th:for="street">거리</label>
+            <input type="text" th:field="*{street}" class="form-control"
+                   placeholder="거리를 입력하세요">
+        </div>
+        <div class="form-group">
+            <label th:for="zipcode">우편번호</label>
+            <input type="text" th:field="*{zipcode}" class="form-control"
+                   placeholder="우편번호를 입력하세요">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    <br/>
+    <div th:replace="fragments/footer :: footer" />
+</div> <!-- /container -->
+</body>
+</html>
