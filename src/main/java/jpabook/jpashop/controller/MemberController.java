@@ -11,6 +11,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 public class MemberController {
@@ -44,5 +46,18 @@ public class MemberController {
         return "redirect:/";
         //재로딩을 방지하기 위한 리다이렉트
     }
+    //추가
+    @GetMapping(value = "/members")
+    public String list(Model model) {
+        List<Member> members = memberService.findMembers();
+        model.addAttribute("members", members);
+        return "members/memberList";
+    }
+    //요구사항이 단순하지 않을 경우 폼이나 DTO를 사용해서 데이터를 받는 게 좋다.
+    //엔티티는 최대한 순수하게 설계해야 된다.
+    //엔티티는 최대한 순수한 상태를 유지하는 게 좋다.
+    //api를 설계할 때는 외부로 API를 반환하면 안된다.
+    //api의 스팩이 엔티티의 변경에 따라 계속 변경되면 안되기 때문에
+    //dto를 사용해서 항상 데이터를 가려야된다.
 
 }

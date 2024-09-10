@@ -8,6 +8,7 @@ import jpabook.jpashop.domain.item.Item;
 import jpabook.jpashop.repository.ItemRepository;
 import jpabook.jpashop.repository.MemberRepository;
 import jpabook.jpashop.repository.OrderRepository;
+import jpabook.jpashop.repository.OrderSearch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +42,8 @@ public class OrderService {
         //되어 있어서 이대로 오더만 저장하면 나머지도 전부 저장된다고 보면 된다.
         //이런 케스케이드의 범위는 참조 주인이 1개일 경우에만 사용해야 된다.
 
+        //핵심 비즈니스 로직은 엔티티를 식별자로 트렌젝션 내부에서 찾으면 영속성 컨텍스트를
+        //활용할 수 있어서 훨씬 편리하다.
         //주문 저장
         orderRepository.save(order);
         return order.getId();
@@ -58,8 +61,8 @@ public class OrderService {
         order.cancel();
     }
     
-    //검색
-//    public List<Order> findOrder(OrderSearch orderSearch){
-//        return orderRepository.findAll(orderSearch);
-//    }
+//    검색
+    public List<Order> findOrder(OrderSearch orderSearch){
+        return orderRepository.findAll(orderSearch);
+    }
 }
