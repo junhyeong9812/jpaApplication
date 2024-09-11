@@ -6,7 +6,8 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: none
+#      create
   properties:
     hibernate:
 #      show_sql: true #sysout으로 찍기 때문에 쓰면 안됨
