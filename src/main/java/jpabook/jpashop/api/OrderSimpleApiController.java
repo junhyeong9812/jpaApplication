@@ -1,16 +1,18 @@
 package jpabook.jpashop.api;
 
-import jakarta.persistence.OneToMany;
+import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Order;
+import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 //Order
 //Order->Member
@@ -63,4 +65,73 @@ public class OrderSimpleApiController {
     //하지만 API를 만들 때 이렇게 복잡하게 만들지 않는다.
     //회원정보 배송 상태같은 값들이 전부 필요한 게 아니라 필요한 데이터만 반환하도록 해야된다.
     //그래야 프론트와 원활하게 설계할 수 있다.
+    @GetMapping("/api/v2/simple-orders")
+    public List<SimpleOrderDto> orderV2(){
+        //이때 반환하는 값도 list가 아닌
+        //별도의 DTO형식으로 Result로 감싸서 보내는 게 좋다.
+        //결국 N+1을 일으키게 된다.
+        List<Order> orders = orderRepository.findAll(new OrderSearch());
+        List<SimpleOrderDto> result = orders.stream()
+//                .map(o -> new SimpleOrderDto(o))
+                .map(SimpleOrderDto::new)
+                //람다 레퍼런스로 이렇게 묶을 수 있다.
+                //map은 a->b로 변경하는 작업
+                .collect(Collectors.toList());
+                //값을 collect를 통해 list형식으로 변환
+        return result;
+        //API스팩에 맞춰서 설계한 것
+//        "orderId": 1,
+//                "name": "userA",
+//                "orderDate": "2024-09-15T18:28:09.37286",
+//                "orderStatus": "ORDER",
+//                "address": {
+//            "city": "서울",
+//                    "street": "1",
+//                    "zipcode": "1111"
+//        } //이렇게 value object로 들어오는데 
+        //값타입 관련 공부 필요
+    }
+
+    @Data
+    static class SimpleOrderDto{
+        private Long orderId;
+        private String name;
+        private LocalDateTime orderDate;
+        private OrderStatus orderStatus;
+        private Address address;
+        public SimpleOrderDto(Order order){
+            //이렇게 엔티티로 받는건 괜찮다 중요하지 않은 곳에서 엔티티로 받는 것은
+            //크게 중요하지 않는다.
+            orderId=order.getId();
+            name = order.getMember().getName(); //lazy 초기화
+            orderDate = order.getOrderDate();
+            orderStatus=order.getStatus();
+            address=order.getDelivery().getAddress(); //lazy 초기화
+            //이렇게 해놓으면 엔티티 수정 시 바로 컴파일 에러가 나오기 때문에
+            //유지보수가 훨씬 편리해진다.
+            //꼭 DTO로 바꿔서 보내는 게 좋다.
+
+        }
+    }
+    //이때 v1/v2가 lazyLoding으로 통해 너무 많은 쿼리가 발생된다.
+    //현재 오더/맴버/딜리버리 3개의 쿼리를 조회하기 때문에
+    //오더에서 그 내부에 맴버에 대해 쿼리를 날리고 딜리버리에도 쿼리를 날려서
+    //데이터를 가져오게 된다.
+    //이때 오더 맴버 딜리버리르 조회하고 이후에 맴버의 ID값 하나씩만 넘겨서 확인하고
+    //처음 주문도 3번 두번째 주문도 3번쿼리를 해버린다.
+    //order 조회 ->SQL1번 -> 주문 2개
+    //결과 주문 2개-> 맴버와 딜리버리에 대한 검색 루프가 두번 돈다
+    //처음 검색할 때 주문에 등록된 id를 통해서 그 id만 가져오기 때문에
+    //다음 쿼리 시에도 그 주문에 해당하는 id로 또 검색하게 되는 것
+    //왜냐면 첫 탐색에서는 영속성 컨텍스트 내부에는 id로 조회한 단일 데이터만 들어있어서
+    //또 두번째 오더에 대한 단일 id조회를 해버려서 2개를 조회할 때 쿼리가 5개가
+    //나간다.
+//    하지만 이때 ENGER를 사용하면 될까?? >>JPQL이 많아질수록
+    //사용하면 안된다.
+    //예측불가능한 쿼리가 나갈 수도 있어서 데이터에 대한 확실성이 없다.
+    //양방향이 걸려있어서 쿼리 예측이 안되어 유지보수에서도 어려움이 생길 수 있다.
+    //이때 왜 이렇게 될까? ENGER로 하면 ORDER를 가져와서
+    //이후 맴버와 딜리버리정보를 전부 조회하려고 예측 불가능한 쿼리가 생성되는 것
+    //그래서 LAZY로 해놓고 fetch Join 튜닝을 통해 n+1문제를 해결해야 된다.
+
 }

@@ -1,6 +1,7 @@
 package jpabook.jpashop;
 
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
+
+import com.fasterxml.jackson.datatype.hibernate6.Hibernate6Module;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -16,13 +17,14 @@ public class JpashopApplication {
 		SpringApplication.run(JpashopApplication.class, args);
 	}
 	@Bean
-	Hibernate5Module hibernate5Module() {
-		return new Hibernate5Module();
+	Hibernate6Module hibernate5Module() {
+		return new Hibernate6Module();
 		//Lazy로 하고 싶을 경우
 //		Hibernate5Module hibernate5Module = new Hibernate5Module();
 //		hibernate5Module().configure(Hibernate5Module.Feature.FORCE_LAZY_LOADING,true);
 //		lazy모듈을 사용하는 거 자체가 그렇게 좋은 것이 아니다.
 		//결과론적으로 엔티티를 직접 노출해야되기 때문이다.
 	}
+	//Hibernate6Module 5모듈은 javax기반이라 스프링 3.0버전에서는 사용불가
 
 }
