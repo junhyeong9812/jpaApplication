@@ -134,4 +134,22 @@ public class OrderSimpleApiController {
     //이후 맴버와 딜리버리정보를 전부 조회하려고 예측 불가능한 쿼리가 생성되는 것
     //그래서 LAZY로 해놓고 fetch Join 튜닝을 통해 n+1문제를 해결해야 된다.
 
+    @GetMapping("/api/v3/simple-orders")
+    public List<SimpleOrderDto> orderV3(){
+        List<Order> orders=orderRepository.findAllWithMemberDelivery();
+        List<SimpleOrderDto> result = orders.stream()
+                .map(SimpleOrderDto::new)
+                .collect(Collectors.toList());
+        return result;
+        //실무에서는 이런 객체 그래프를 만드는게 정해져있어서
+        //별도 설계 후 만들면 좋다.
+        //이렇게 select로 전부 긁어오기 때문에 이에 대한 최적화도 필요하다.
+
+    }
+    //JPA에서 DTO로 바로 조회
+
+    @GetMapping("/api/v4/simple-orders")
+    public List<SimpleOrderDto> orderV4(){
+         return orderRepository.findOrderDtos();
+
 }
