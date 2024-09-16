@@ -125,22 +125,38 @@ public class OrderRepository {
 //        이처럼 fetch조인만 잘 써도 성능 최적화가 가능하다.
     }
     
-    //DTO로 바로 구현
-    public List<OrderSimpleQueryDto> findOrderDtos() {
+//    //DTO로 바로 구현
+//    public List<OrderSimpleQueryDto> findOrderDtos() {
+////        return em.createQuery(
+////                "select o from Order o" +
+////                        " join o.member m" +
+////                        " join o.delivery d",OrderSimpleQueryDto.class
+////        ).getResultList();
+//        //이렇게 하면 바로 매핑이 안되서 엔티티나 임베더블만 반환되고
+//        //dto는 안된다.
+//        //""내에서 엔티티가 식별자로 넘어가버리기 때문에 (o)로 못넣는다.
 //        return em.createQuery(
-//                "select o from Order o" +
+//                "select new jpabook.jpashop.repository" +
+//                        ".OrderSimpleQueryDto(o.id,m.name,o.orderDate,o.status,d.address)" +
+//                        " from Order o" +
 //                        " join o.member m" +
 //                        " join o.delivery d",OrderSimpleQueryDto.class
 //        ).getResultList();
-        //이렇게 하면 바로 매핑이 안되서 엔티티나 임베더블만 반환되고
-        //dto는 안된다.
-        return em.createQuery(
-                "select new jpabook.jpashop.repository.OrderSimpleQueryDto()" +
-                        " from Order o" +
-                        " join o.member m" +
-                        " join o.delivery d",OrderSimpleQueryDto.class
-        ).getResultList();
-    }
+//        //이건 논리적으로 계층이 깨져있는 상태이기 때문에
+//        //리파지토리가 화면에 의존하게 되는 것
+//        //API스팩이 바뀌면 이 리파지토리 자체를 변경해야된다.
+//        //이러한 단점이 존재한다.
+//        //v3와 v4의 성능차이가 많이 난다.
+//        //대부분에서 네트워크가 좋아서도 있지만
+//        //대부분 성능애서 from innerjoin쪽에서
+//        //먹는다
+//        //인덱스를 안타고 필드가 추가된다고 성능에 대한 유무는 크지 않다.
+//        //인덱스가 잘못 잡혔을 때 문제가 생기는거지
+//        //이런 select객체는 문제가 생기지 않는다.
+//        //하지만 select가 너무 많으면 이때는 고민해봐야 한다.
+//        //트래픽이 심할 경우에는 (고객이 실시간으로 누르는 API일 경우
+//        //최적화에 대한 고민을 하게 된다.
+//    }
 
 
 

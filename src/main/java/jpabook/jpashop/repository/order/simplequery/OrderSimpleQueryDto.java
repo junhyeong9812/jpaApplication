@@ -1,7 +1,6 @@
-package jpabook.jpashop.repository;
+package jpabook.jpashop.repository.order.simplequery;
 
 import jpabook.jpashop.domain.Address;
-import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderStatus;
 import lombok.Data;
 
@@ -25,9 +24,7 @@ public OrderSimpleQueryDto(Long orderId,String name,LocalDateTime orderDate,Orde
     this.orderDate =orderDate;
     this.orderStatus=orderStatus;
     this.address=address; //lazy 초기화
-        //이렇게 해놓으면 엔티티 수정 시 바로 컴파일 에러가 나오기 때문에
-        //유지보수가 훨씬 편리해진다.
-        //꼭 DTO로 바꿔서 보내는 게 좋다.
+
 
     }
 }

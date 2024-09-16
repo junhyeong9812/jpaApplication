@@ -5,6 +5,8 @@ import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.order.simplequery.OrderSimpleQueryDto;
+import jpabook.jpashop.repository.order.simplequery.OrderSimpleQueryRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderSimpleApiController {
     private final OrderRepository orderRepository;
+    private final OrderSimpleQueryRepository orderSimpleQueryRepository;
 
     @GetMapping("/api/v1/simple-orders")
     public List<Order> ordersV1(){
@@ -149,7 +152,23 @@ public class OrderSimpleApiController {
     //JPA에서 DTO로 바로 조회
 
     @GetMapping("/api/v4/simple-orders")
-    public List<SimpleOrderDto> orderV4(){
-         return orderRepository.findOrderDtos();
+    public List<OrderSimpleQueryDto> orderV4() {
+        return orderSimpleQueryRepository.findOrderDtos();
+        //리포지토리에 DTO 조회는 API스팩이 리포지토리에 존재하게 되는 것
+        //이걸 해결하기 위해서는?
+        //성능 최적화 쿼리용 리포자토리를 별도로 생성한다.
 
+    }
+    //이렇게 dto조인을 하면 select절에서 원하는 것만 select가 가능하다.
+    //fetch조인은 엔티티의 모든 정보를 다 가져오지만 DTO로 포멧하면
+    //훨씬 쉽게 dto에 맞게 가져올 수 있다.
+    //이때 v4/v3는 우열을 가리기 어렵다.
+    //v3는 order로 원하는 것만 패치조인으로 원하는 것만 가져왔지만
+    //외부 모습을 건드리지 않은 상태로 내부에 원하는 것만 패치조인으로
+    //튜닝이 가능한건데
+    //V4는 쿼리를 한번 할때 SQL짤때 작성하여 데이터를 가져올 수 있따.
+    //하지만 V4는 재사용성이 낮지만 v3는 재사용성이 높다.
+    //사용성 VS 조회 네트워크 성능
+    //DTO은 엔티티가 아니라 변경이 불가능하다.
+    //그리고V4는 코드가 지저분해서
 }
