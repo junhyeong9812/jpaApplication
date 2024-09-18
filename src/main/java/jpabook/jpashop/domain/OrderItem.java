@@ -22,7 +22,7 @@ public class OrderItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
-    @JsonIgnore
+    @JsonIgnore//jsonIgnore는 순환구조에 빠질 수 있기 때문에 필수
     private Order order;
 
     private int orderPrice;//주문 가격
