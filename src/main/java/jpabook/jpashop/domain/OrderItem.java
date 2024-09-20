@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Getter @Setter
@@ -24,6 +25,7 @@ public class OrderItem {
     @JoinColumn(name = "order_id")
     @JsonIgnore//jsonIgnore는 순환구조에 빠질 수 있기 때문에 필수
     private Order order;
+    //여기가 FK이기 떄문에 order를 실질적으로 참조하지 않는다.
 
     private int orderPrice;//주문 가격
     private int count;//주문 수량

@@ -4,10 +4,12 @@ import jakarta.persistence.*;
 import jpabook.jpashop.exception.NotEnoughException;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@BatchSize(size = 100)
 @Entity
 @Getter @Setter
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -23,7 +25,6 @@ public abstract class Item {
     private int stockQuantity;
 
     @ManyToMany(mappedBy = "items")
-
     private List<Category> categories=new ArrayList<>();
 
     //--비즈니스 로직--

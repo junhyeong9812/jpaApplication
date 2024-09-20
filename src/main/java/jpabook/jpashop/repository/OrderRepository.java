@@ -124,7 +124,55 @@ public class OrderRepository {
         //inner join을 하고 싶으면 left join fetch를 하면 된다.
 //        이처럼 fetch조인만 잘 써도 성능 최적화가 가능하다.
     }
-    
+    //주문 조회V3: 엔티티 DTO변환 fetch조인
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                "select distinct o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d" +
+                        " join fetch o.orderItems oi" +
+                        " join fetch oi.item i",Order.class
+        )
+//                .getResultList();
+        //order ->Member
+        //order ->delivery
+        //order ->orderItems 이 과정에서 order가 4개가 되어버리는 상황이 된다.
+        //select * from orders o join order_item oi on o.order_id=oi.order_id
+        //로 쿼리가 나가서 원래 order가 2개지만
+        //4개로 나오는 대참사가 일어난다.
+        //왜냐면 join을 하면 oi에서 2개라 db는 1줄씩 만들어야 해서
+        //1개에 대해 두개의 줄이 생긴다.
+        //order가 orderItem 갯수에 맞춰서 오기 떄문에 order의 갯수가 1개가 아닌 두개로
+        //가져오게 된다.
+        //distinct를 넣으면 쿼리에 distinct가 추가되고 중복을 제거한 정보가 넘어온다.
+        //하지만 db의 distinct는 전부 같아야 중복처리가 되지만
+        //jpa의 distinct에서는 order의 id값이 같으면 중복을 제거해준다.
+        //그 후 list에 담아서 보내준다.
+        //db에 distinct키워드를 난리고
+        //엔티티의 중복을 걸러서 컬렉션에 담아주도록 설계가 되어있다.
+
+                //페이징처리를 한다면?
+                .setFirstResult(1)
+                .setMaxResults(100)
+                .getResultList();
+        //쿼리를 확인해보면 limit와 offset이 없는 것을 알 수 있다.
+        //
+//        2024-09-19T14:47:21.846+09:00  WARN 25384 --- [jpashop] [nio-8080-exec-2] org.hibernate.orm.query                  : HHH90003004: firstResult/maxResults specified with collection fetch; applying in memory
+        //패치조인을 썼는데 페이징 쿼리가 들어가서 메모리에서 페이징처리를 해버리는 것
+        //그래서 경고를 내는 것
+        //만약 데이터가 많다면 만대를 다 퍼올려서 페이징처리를 하게 되는것
+        //메모리에서
+        //그러면 아웃오브 메모리가 나와서 터질 수 있다.
+        //db쿼리에서는 1대다에 대해서 조인을 하면 오더의 기준이 틀어지기 때문에
+        //별도의 메모리에서 처리하려고 이러한 동작이 일어나는 것
+        //그래서 order의 사이즈가 정상적으로 구하기 힘든 것
+        //1대다 기준으로 쿼리가 뻥튀기가 되어서 이 뻥튀기된 데이터 기준으로
+        //페이징이 되어서 어쩔 수 없이 1대다일 경우 하이버네이트는 경고를 내고
+        //메모리에서 페이징 처리를 해준다.
+        //하지만 이런 방식은 데이터가 많으면 많을수록 동작이 훨씬 느려진다.
+        //뻥튀기로 인한 DB상 페이징 불가능이 일어나는 것
+    }
+
 //    //DTO로 바로 구현
 //    public List<OrderSimpleQueryDto> findOrderDtos() {
 ////        return em.createQuery(
@@ -175,6 +223,39 @@ public class OrderRepository {
 //                .fetch();
 //    }
 //지금 위의 빌드 타입을 이렇게 간략하게 설계할 수 있다.
+
+    //페이징+컬렉션 엔티티를 함께 조회하려면?
+    //1.ToOne관계를 모두 fetch조인을 한다.toOne관계는 row수를 증가시키지 않으니
+    //페이징에 영향을 끼치지 않는다.
+//    public List<Order> findAllWithMemberDelivery() {
+//        return em.createQuery(
+//                        "select o from Order o" +
+//                                " join fetch o.member m" +
+//                                " join fetch o.delivery d", Order.class)
+//
+//                .getResultList();
+//    }
+
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+        //  " join fetch o.member m" +
+        //  " join fetch o.delivery d"
+        //이부분이 없어도 배치 설정에 의해서 필요한 정보를 인쿼리로 가져올 것이다.
+        //하지만 toOne 관계에 대해 네트워크를 많이 타기 때문에 없애는게 좋다.
+
+    }
+
+    //2.컬렉션은 지연로딩으로 조회한다.
+    //3.지연 로딩 성능 최적화를 위해 hibernate.default_batch_fetch_size , @BatchSize 를 적용한다.
+    //hibernate.default_batch_fetch_size: 글로벌 설정
+    //@BatchSize: 개별 최적화
+    //이 옵션을 사용하면 컬렉션이나, 프록시 객체를 한꺼번에 설정한 size 만큼 IN 쿼리로 조회한다.
 
 
 }
