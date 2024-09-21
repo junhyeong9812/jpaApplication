@@ -3,11 +3,13 @@ package jpabook.jpashop.repository.order.query;
 import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.OrderStatus;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(of = "orderId")
 public class OrderQueryDTO {
     private Long orderId;
     private String name;
@@ -27,5 +29,14 @@ public class OrderQueryDTO {
         //new operation에서 jpql을 짜도 컬렉션을 바로 넣을 수 없기 때문에
         //createquery에서도 뉴 오퍼에이션에서 dto의 1줄로 컬렉션을 제외한 값만 넣어야 한다
         //
+    }
+    //v6를 위한 전체 코드
+    public OrderQueryDTO(Long orderId, String name, LocalDateTime orderDate, OrderStatus orderStatus, Address address, List<OrderItemQueryDto> orderItems) {
+        this.orderId = orderId;
+        this.name = name;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        this.address = address;
+        this.orderItems = orderItems;
     }
 }

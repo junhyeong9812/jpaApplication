@@ -6,6 +6,8 @@ import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.repository.OrderRepository;
 import jpabook.jpashop.repository.OrderSearch;
+import jpabook.jpashop.repository.order.query.OrderFlatDto;
+import jpabook.jpashop.repository.order.query.OrderItemQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryDTO;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
@@ -17,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -237,6 +239,44 @@ public class OrderApiController {
         return orderQueryRepository.findOrderQueryDtos();
     }
     //하지만 이것도 결국 N+1이다.
+
+    //주문 조회 V5: JPA에서 DTO 직접 조회 N+1해결
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDTO> orderV5(){
+        return orderQueryRepository.findAllByDto_optimization();
+    }
+
+//    주문 조회 V6: JPA에서 DTO로 직접 조회, 플랫 데이터 최적화
+    @GetMapping("/api/v6/orders")
+    public List<OrderQueryDTO> orderV6(){
+
+        List<OrderFlatDto> Flats = orderQueryRepository.findAllByDto_flat();
+        //이때 중복을 포함해서 각각 4개가 나오는 것을 볼 수 있다.
+        //주문번호가 중복으로 생성되어버린다.
+        //한방 쿼리로 모든정보를 가져올 수 있고 페이징도 가능하다.
+        //하지만 오더기준 페이징이 불가능하다. 이떄는 orderItems가 기준이 되어버리는 것
+        //결국 페이징 불가능
+        //또한 api스팩을 OrderQueryDTO로 맞춰야된다면?
+        //orderFlatDto에서 orderId를 기준으로 직접 OrderQueryDTO형식으로 바꾸면 되는데
+        //
+        return Flats.stream()
+                .collect(groupingBy(o -> new OrderQueryDTO(o.getOrderId(),o.getName(), o.getOrderDate(), o.getOrderStatus(), o.getAddress()),
+                        mapping(o -> new OrderItemQueryDto(o.getOrderId(),
+                                o.getItemName(), o.getOrderPrice(), o.getCount()), toList())
+                )).entrySet().stream()
+                .map(e -> new OrderQueryDTO(e.getKey().getOrderId(),
+                        e.getKey().getName(), e.getKey().getOrderDate(), e.getKey().getOrderStatus(),
+                        e.getKey().getAddress(), e.getValue()))
+                .collect(toList());
+        //직접 메모리에서 작업하는 것
+        //이떄 안되는이유는 OrderQueryDTO에서 equalsAndHashCode지정이 안되서
+        //그룹핑이 안되는 것
+        //DB에서 app에 전달하는 데이터가 중복 데이터가 추가되어 V5보단 느릴 수 있고
+        //애플리케이션에서 추가작업이 많다.
+        //페이징이 order기준으로 불가능하다.
+
+        //하지만 Query를 1번만 날려서 데이터를 가져올 수 있다.
+    }
 
 
 }
