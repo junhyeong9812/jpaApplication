@@ -10,6 +10,8 @@ import jpabook.jpashop.repository.order.query.OrderFlatDto;
 import jpabook.jpashop.repository.order.query.OrderItemQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryDTO;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
+import jpabook.jpashop.service.query.OrderDto;
+import jpabook.jpashop.service.query.OrderQueryService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -277,6 +279,45 @@ public class OrderApiController {
 
         //하지만 Query를 1번만 날려서 데이터를 가져올 수 있다.
     }
+
+
+    // OSIV OFF일 경우
+    //주문조회 v2 :엔티티를 DTO로 변환 후 노출
+    @GetMapping("/api/v2/ordersOSIVOFF")
+    public List<OrderDTO> ordersOSIVOFF(){
+        List<Order> orders = orderRepository.findAll(new OrderSearch());
+        List<OrderDTO> result = orders.stream()
+                .map(OrderDTO::new)
+                //메소드 레퍼런스로 편리하게
+                .collect(toList());
+        //스태틱 임포트로 toList로 간략하게 만들 수 있다.
+        return result;
+    }
+    //단순한 경우에는 이러한 컨트롤러의 코드를 OrderQueryService같은 것을 만들어서
+
+    private final OrderQueryService orderQueryService;
+    @GetMapping("/api/v3/ordersOSIV")
+    public List<OrderDto> ordersV3OSIV(){
+        return orderQueryService.ordersV3OSIV();
+    }
+    //이렇게 트렌잭션 내부에서 돌리면 정상적으로 데이터를 가져오는 것을 볼 수 있다.
+    //트렌젝션은 서비스에서 안쓰기 떄문에 API 변환 자체를 하는 별도의
+    //쿼리 서비스를 만들어서 사용하는 이와 같은 방식이 유용하다.
+//      비즈니스 로직은 특정 엔티티 몇개를 등록하거나 수정하는거라 크게 문제가 되지 않는다.
+//        보통 조회에서 문제가 많이 발생한다.
+//        복잡한 화면을 출력하기 위해서 하는 쿼리가 성능에 문제를 발생시켜서
+//      보통 개발할 때 성능최적화를 위해 화면에 맞춘다.
+//        그래서 개발을 할 때 한 리파지토리에 비즈니스랑 화면 단을 위한 로직을
+//      한곳에 넣으면 복잡한 조회용 쿼리를 합쳐놓으면 유지보수성이 너무 떨어진다.
+//        화면용API는 자주 바뀌기 때문에 라이프 사이클이 짧다.
+//        하지만 핵심 비즈니스 서비스로직은 잘 변경되지 않기 때문에 라이플 사이클이
+//            길다.
+        //그래서 둘 사이에 관심사를 명확하게 분리하는 게 유지보수에 좋다.
+        //코딩만 하는 유지보수는 OSIV가 장점이 많지만
+    //성능을 생각하면 이걸 끄는 게 좋다.
+    //그래서 고객 서비스 트래픽이 많은 곳은 OSIV를 끄고
+    //ADMIN같은 커넥션을 많이 사용하는 곳에서는 OSIV를 키는게 좋다.
+    //이렇게 상황에 맞춰 트래픽을 고려해서 하는 게 좋다.
 
 
 }
