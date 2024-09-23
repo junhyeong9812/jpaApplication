@@ -43,7 +43,11 @@ public class MemberService {
     //중복 회원 로직
     private void validateDuplicateMember(Member member){
         //
+//        List<Member> findMembers = memberRepository.findByName(member.getName());
+        //spring의 jpa가 필드명을 모르기 때문에 이러한 건 별로로 만들어줘야 한다.
         List<Member> findMembers = memberRepository.findByName(member.getName());
+
+
         //db에 동시에 호출하면 문제가 생길 수 있는데 이때 멀티 스레드를고려해야 된다.
         //그래서 Name은 unique제약 조건이 있는 게 좋다.
         if(!findMembers.isEmpty()){
@@ -58,13 +62,20 @@ public class MemberService {
     }
 
     //회원 단건 조회
+//    public Member findOne(Long memberId){
+//        return memberRepository.findOne(memberId);
+//    }
+    //JPA변환
     public Member findOne(Long memberId){
-        return memberRepository.findOne(memberId);
+        return memberRepository.findById(memberId).get();
     }
+
 
     @Transactional
     public void update(Long id, String name) {
-        Member member = memberRepository.findOne(id);
+//        Member member = memberRepository.findOne(id);
+        //jpa 전환
+        Member member = memberRepository.findById(id).get();
         member.setName(name);
         //더치체크로 자동 저장이 될 것
     }
