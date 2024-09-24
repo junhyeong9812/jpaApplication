@@ -30,7 +30,7 @@ public class Order {
     //JPQL select o from order o;-> order가 100개라면 처음 쿼리1개와
     //그 오더에 대한 맴버를 단건 조회로 100개 가져와서 N+1문제라 한다.
 
-    @BatchSize(size = 1000)
+//    @BatchSize(size = 1000)
     @OneToMany(mappedBy = "order",cascade =CascadeType.ALL)
     private List<OrderItem> orderItems =new ArrayList<>();
 //,cascade =CascadeType.ALL는 오더를 저장할 때 오더아이템 객체를 넣어놓으면

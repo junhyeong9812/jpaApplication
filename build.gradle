@@ -1,3 +1,12 @@
+//querydsl 추가
+//buildscript {
+//	dependencies {
+//		classpath("gradle.plugin.com.ewerk.gradle.plugins:querydslplugin:1.0.10")
+//	}
+//}
+//spring 3부터는 사용하지 않는다.
+
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.3'
@@ -5,6 +14,9 @@ plugins {
 	//이 버전에 맞춰서 라이브러리들 버전을 맞춰준다.
 	id 'io.spring.dependency-management' version '1.1.6'
 }
+////QueryDLS 추가
+//apply plugin: 'io.spring.dependency-management'
+//apply plugin: "com.ewerk.gradle.plugins.querydsl"
 
 group = 'jpabook'
 version = '0.0.1-SNAPSHOT'
@@ -43,8 +55,54 @@ dependencies {
 	testImplementation("org.junit.vintage:junit-vintage-engine") {
 		exclude group: "org.hamcrest", module: "hamcrest-core"
 	}
+//	//querydsl 추가
+//	implementation 'com.querydsl:querydsl-jpa'
+////querydsl 추가
+//	implementation 'com.querydsl:querydsl-apt'
+	//Querydsl 추가
+	implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+//	annotationProcessor "com.querydsl:querydsl-apt:${dependencyManagement.importedProperties['querydsl.version']}:jakarta"
+	annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+
 }
+sourceSets {
+	main {
+		java {
+			srcDirs += "$buildDir/generated/sources/annotationProcessor/java/main"
+		}
+	}
+}
+//Q파일 위치를 지정해줘야 한다.
+//querydsl 추가
+//def querydslDir = 'src/main/generated'
+//def querydslDir = "$buildDir/generated/querydsl"
+//querydsl {
+//	library = "com.querydsl:querydsl-apt"
+//	jpa = true
+//	querydslSourcesDir = querydslDir
+//}
+//sourceSets {
+//	main {
+//		java {
+//			srcDirs = ['src/main/java', querydslDir]
+//		}
+//	}
+//}
+//compileQuerydsl{
+//	options.annotationProcessorPath = configurations.querydsl
+//}
+//configurations {
+//	querydsl.extendsFrom compileClasspath
+//}
 
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+clean {
+	delete file('src/main/generated')
+}
+

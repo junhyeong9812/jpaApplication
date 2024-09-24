@@ -1,12 +1,12 @@
 package jpabook.jpashop.repository;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
-import jpabook.jpashop.domain.Address;
-import jpabook.jpashop.domain.Member;
+import jpabook.jpashop.domain.*;
 import jpabook.jpashop.domain.Order;
-import jpabook.jpashop.domain.OrderStatus;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -16,10 +16,22 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static jpabook.jpashop.domain.QMember.member;
+import static jpabook.jpashop.domain.QOrder.order;
+
 @Repository
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class OrderRepository {
     private final EntityManager em;
+
+    private final JPAQueryFactory query;
+    // 직접 생성자 작성
+    public OrderRepository(EntityManager em) {
+        this.em = em;
+        this.query = new JPAQueryFactory(em);
+    }
+
+
     public void save(Order order){
         em.persist(order);
     }
@@ -27,53 +39,53 @@ public class OrderRepository {
         return em.find(Order.class,id);
     }
 
-    //검색에는 동적 쿼리가 필요
-    public List<Order> findAll(OrderSearch orderSearch){
-        //조건이 다 있다면
-//        em.createQuery("select o from Order o join o.member m " +
-//                "where o.status=:status" +
-//                " and m.name=:name",Order.class)
-//                .setParameter("status",orderSearch.getOrderStatus())
-//                .setParameter("name",orderSearch.getMemberName())
-//                .setMaxResults(1000)//.setFirstResult>>페이징 처리
-//                .getResultList();
-        //검색 조건에 둘 다 있으면 이렇게 쿼리를 짜면 되지만 만약 둘 다 없거나 둘 중 하나도
-        //없다면?
-        //이걸 동적 쿼리로 해결해야 된다.
-        //동적 쿼리 방식
-        //language=JPAQL
-        String jpql = "select o From Order o join o.member m";
-        boolean isFirstCondition = true;
-        //주문 상태 검색
-        if (orderSearch.getOrderStatus() != null) {
-            if (isFirstCondition) {
-                jpql += " where";
-                isFirstCondition = false;
-            } else {
-                jpql += " and";
-            }
-            jpql += " o.status = :status";
-        }
-        //회원 이름 검색
-        if (StringUtils.hasText(orderSearch.getMemberName())) {
-            if (isFirstCondition) {
-                jpql += " where";
-                isFirstCondition = false;
-            } else {
-                jpql += " and";
-            }
-            jpql += " m.name like :name";
-        }
-        TypedQuery<Order> query = em.createQuery(jpql, Order.class)
-                .setMaxResults(1000); //최대 1000건
-        if (orderSearch.getOrderStatus() != null) {
-            query = query.setParameter("status", orderSearch.getOrderStatus());
-        }
-        if (StringUtils.hasText(orderSearch.getMemberName())) {
-            query = query.setParameter("name", orderSearch.getMemberName());
-        }
-        return query.getResultList();
-    }
+//    //검색에는 동적 쿼리가 필요
+//    public List<Order> findAll(OrderSearch orderSearch){
+//        //조건이 다 있다면
+////        em.createQuery("select o from Order o join o.member m " +
+////                "where o.status=:status" +
+////                " and m.name=:name",Order.class)
+////                .setParameter("status",orderSearch.getOrderStatus())
+////                .setParameter("name",orderSearch.getMemberName())
+////                .setMaxResults(1000)//.setFirstResult>>페이징 처리
+////                .getResultList();
+//        //검색 조건에 둘 다 있으면 이렇게 쿼리를 짜면 되지만 만약 둘 다 없거나 둘 중 하나도
+//        //없다면?
+//        //이걸 동적 쿼리로 해결해야 된다.
+//        //동적 쿼리 방식
+//        //language=JPAQL
+//        String jpql = "select o From Order o join o.member m";
+//        boolean isFirstCondition = true;
+//        //주문 상태 검색
+//        if (orderSearch.getOrderStatus() != null) {
+//            if (isFirstCondition) {
+//                jpql += " where";
+//                isFirstCondition = false;
+//            } else {
+//                jpql += " and";
+//            }
+//            jpql += " o.status = :status";
+//        }
+//        //회원 이름 검색
+//        if (StringUtils.hasText(orderSearch.getMemberName())) {
+//            if (isFirstCondition) {
+//                jpql += " where";
+//                isFirstCondition = false;
+//            } else {
+//                jpql += " and";
+//            }
+//            jpql += " m.name like :name";
+//        }
+//        TypedQuery<Order> query = em.createQuery(jpql, Order.class)
+//                .setMaxResults(1000); //최대 1000건
+//        if (orderSearch.getOrderStatus() != null) {
+//            query = query.setParameter("status", orderSearch.getOrderStatus());
+//        }
+//        if (StringUtils.hasText(orderSearch.getMemberName())) {
+//            query = query.setParameter("name", orderSearch.getMemberName());
+//        }
+//        return query.getResultList();
+//    }
     //JPA Criteria로 처리
     public List<Order> findAllByCriteria(OrderSearch orderSearch) {
         CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -257,5 +269,55 @@ public class OrderRepository {
     //@BatchSize: 개별 최적화
     //이 옵션을 사용하면 컬렉션이나, 프록시 객체를 한꺼번에 설정한 size 만큼 IN 쿼리로 조회한다.
 
+    //findAll을 동적 QueryDSL로 구현
+    public List<Order> findAll(OrderSearch orderSearch){
 
+//        JPAQueryFactory query =new JPAQueryFactory(em);
+        //이 팩토리도 생성자를 통해 private final을 통해 동작시킬 수 있다.
+//        QOrder order = QOrder.order;
+//        QMember member=QMember.member;
+//            Q객체를 static import로 지원해서 줄일 수 있다.
+
+
+        return query
+                .select(order)
+                .from(order)
+                .join(order.member, member)
+                .where(statusEq(orderSearch.getOrderStatus()), nameLike(orderSearch.getMemberName()))
+//                .where(order.status.eq(orderSearch.getOrderStatus()))
+                //,를 넣으면 and조건
+                .limit(1000)
+                .fetch();
+        //이게 jpql로 바뀌어서 돌아간다.
+    }
+
+//    //재사용성
+//    public List<Order> findAll(OrderSearch orderSearch){
+//        return query
+//                .select(order)
+//                .from(order)
+//                .where(statusEq(orderSearch.getOrderStatus()), nameLike(orderSearch.getMemberName()))
+//                .fetch();
+//    }
+//  이런 컨티션을 재사용 하기 쉽다.
+
+    private static BooleanExpression nameLike(String MemberName) {
+        if(!StringUtils.hasText(MemberName)){
+            return null;
+
+        }
+        return member.name.like(MemberName);
+    }
+
+    private BooleanExpression statusEq(OrderStatus statusCond ){
+        if(statusCond==null){
+            return null;
+        }
+        return order.status.eq(statusCond);
+    }//이렇게해서 where에서 상태가 null이면 그냥 그절은 버리고
+    //null이 아닌 같은 스테이터스일 경우에는 그대로 동작한다.
+    //또한 자바코드라 컴파일 시점에 오타들도 전부 잡힌다는 장점이 존재한다.
+    //QDSL은 깃할때 안들어가도록 주의
+    //빌드할때 제네레이트 되면 되는거라 깃에 안올려도 된다.
+    //
 }

@@ -8,6 +8,8 @@ import jpabook.jpashop.service.ItemService;
 import jpabook.jpashop.service.MemberService;
 import jpabook.jpashop.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +19,7 @@ import java.util.List;
 @Controller
 @RequiredArgsConstructor
 public class OrderController {
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
     private final OrderService orderService;
     private final MemberService memberService;
     private final ItemService itemService;
@@ -42,6 +45,7 @@ public class OrderController {
     @GetMapping("/orders")
     public String orderList(@ModelAttribute("orderSearch") OrderSearch orderSearch,Model model){
         List<Order> orders = orderService.findOrder(orderSearch);
+        System.out.println("ordersList! = " + orders);
         model.addAttribute("orders",orders);
         return "order/orderList";
 

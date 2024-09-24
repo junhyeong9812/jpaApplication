@@ -67,4 +67,10 @@ public class OrderService {
     public List<Order> findOrder(OrderSearch orderSearch){
         return orderRepository.findAll(orderSearch);
     }
+
+//QueryDSL사용 시
+    //Q파일을 생성해줘야한다.
+//    public List<Order> findAll
+
+
 }
